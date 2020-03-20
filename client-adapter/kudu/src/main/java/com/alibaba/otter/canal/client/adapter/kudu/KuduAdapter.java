@@ -11,6 +11,7 @@ import com.alibaba.otter.canal.client.adapter.support.Dml;
 import com.alibaba.otter.canal.client.adapter.support.EtlResult;
 import com.alibaba.otter.canal.client.adapter.support.OuterAdapterConfig;
 import com.alibaba.otter.canal.client.adapter.support.SPI;
+
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,6 +150,10 @@ public class KuduAdapter implements OuterAdapter {
                 }
             } else {
                 logger.error("{} config didn't get,please check your map key ", destination + "_" + database + "-" + table);
+                Object[] set = mappingConfigCache.keySet().toArray();
+                for(int i = 0;i<set.length;i++){
+                    logger.info(set[i].toString());
+                }
             }
         }
     }

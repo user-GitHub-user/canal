@@ -139,7 +139,7 @@ public class KuduConfigMonitor {
             try {
                 if (kuduAdapter.getKuduMapping().containsKey(file.getName())) {
                     deleteConfigFromCache(file);
-                    logger.info("Delete a hbase mapping config: {} of canal adapter", file.getName());
+                    logger.info("Delete a kudu mapping config: {} of canal adapter", file.getName());
                 }
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
@@ -155,8 +155,8 @@ public class KuduConfigMonitor {
         private void addConfigToCache(File file, KuduMappingConfig config) {
             kuduAdapter.getKuduMapping().put(file.getName(), config);
             Map<String, KuduMappingConfig> configMap = kuduAdapter.getMappingConfigCache()
-                    .computeIfAbsent(StringUtils.trimToEmpty(config.getDestination()) + "."
-                                    + config.getKuduMapping().getDatabase() + "." + config.getKuduMapping().getTable(),
+                    .computeIfAbsent(StringUtils.trimToEmpty(config.getDestination()) + "_"
+                                    + config.getKuduMapping().getDatabase() + "-" + config.getKuduMapping().getTable(),
                             k1 -> new HashMap<>());
             configMap.put(file.getName(), config);
         }

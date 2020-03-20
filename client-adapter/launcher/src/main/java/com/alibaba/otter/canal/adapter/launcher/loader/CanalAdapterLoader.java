@@ -61,7 +61,7 @@ public class CanalAdapterLoader {
         }
         String zkHosts = this.canalClientConfig.getZookeeperHosts();
 
-        if ("tcp".equalsIgnoreCase(canalClientConfig.getMode())) {
+        if ("tcp".equalsIgnoreCase(canalClientConfig.getMode()) && canalClientConfig.getCanalAdapters() != null) {
             // 初始化canal-client的适配器
             for (CanalClientConfig.CanalAdapter canalAdapter : canalClientConfig.getCanalAdapters()) {
                 List<List<OuterAdapter>> canalOuterAdapterGroups = new CopyOnWriteArrayList<>();

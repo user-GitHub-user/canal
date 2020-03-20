@@ -13,6 +13,14 @@
     <artifactId>client-adapter.kudu</artifactId>
     <packaging>jar</packaging>
     <name>canal client adapter kudu module for otter ${project.version}</name>
+    
+    <repositories>
+		<repository>
+			<id>cloudera</id>
+			<url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+		</repository>
+	</repositories>
+	
     <dependencies>
         <dependency>
             <groupId>com.alibaba.otter</groupId>
@@ -20,10 +28,15 @@
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
+<!--         <dependency>
             <groupId>org.apache.kudu</groupId>
             <artifactId>kudu-client</artifactId>
             <version>1.6.0</version>
+        </dependency> -->
+        <dependency>
+            <groupId>org.apache.kudu</groupId>
+            <artifactId>kudu-client</artifactId>
+            <version>1.2.0-cdh5.10.2</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

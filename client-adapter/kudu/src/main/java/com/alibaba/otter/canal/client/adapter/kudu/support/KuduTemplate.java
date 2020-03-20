@@ -101,6 +101,9 @@ public class KuduTemplate {
                 for (Map.Entry<String, Object> entry : data.entrySet()) {
                     String name = entry.getKey().toLowerCase();
                     Type type = metaMap.get(name);
+                    if(type == null) {
+                        continue;
+                    }
                     Object value = entry.getValue();
                     fillRow(row, name, value, type); //填充行数据
                 }
@@ -147,15 +150,18 @@ public class KuduTemplate {
             }
             int uncommit = 0;
             for (Map<String, Object> data : dataList) {
-                Update update = kuduTable.newUpdate();
-                PartialRow row = update.getRow();
+                Upsert upsert = kuduTable.newUpsert();
+                PartialRow row = upsert.getRow();
                 for (Map.Entry<String, Object> entry : data.entrySet()) {
                     String name = entry.getKey().toLowerCase();
                     Type type = metaMap.get(name);
+                    if(type == null) {
+                        continue;
+                    }
                     Object value = entry.getValue();
                     fillRow(row, name, value, type); //填充行数据
                 }
-                session.apply(update);
+                session.apply(upsert);
                 // 对于手工提交, 需要buffer在未满的时候flush,这里采用了buffer一半时即提交
                 uncommit = uncommit + 1;
                 if (uncommit > OPERATION_BATCH / 3 * 2) {
@@ -200,15 +206,18 @@ public class KuduTemplate {
             }
             int uncommit = 0;
             for (Map<String, Object> data : dataList) {
-                Insert insert = kuduTable.newInsert();
-                PartialRow row = insert.getRow();
+                Upsert upsert = kuduTable.newUpsert();
+                PartialRow row = upsert.getRow();
                 for (Map.Entry<String, Object> entry : data.entrySet()) {
                     String name = entry.getKey().toLowerCase();
                     Type type = metaMap.get(name);
+                    if(type == null) {
+                        continue;
+                    }
                     Object value = entry.getValue();
                     fillRow(row, name, value, type); //填充行数据
                 }
-                session.apply(insert);
+                session.apply(upsert);
                 // 对于手工提交, 需要buffer在未满的时候flush,这里采用了buffer一半时即提交
                 uncommit = uncommit + 1;
                 if (uncommit > OPERATION_BATCH / 3 * 2) {

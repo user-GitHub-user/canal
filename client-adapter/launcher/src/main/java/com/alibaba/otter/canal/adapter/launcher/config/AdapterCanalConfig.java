@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -27,8 +29,15 @@ public class AdapterCanalConfig extends CanalClientConfig {
 
     private Map<String, DatasourceConfig> srcDataSources;
 
+    private static final Logger logger  = LoggerFactory.getLogger(AdapterCanalConfig.class);
     @Override
     public void setCanalAdapters(List<CanalAdapter> canalAdapters) {
+        if(canalAdapters != null) {
+            logger.info("------------elephant.wang info canalAdapters[0] instanceName: "+canalAdapters.get(0).getInstance());
+            if(canalAdapters.get(0).getInstance() == null || canalAdapters.get(0).getInstance().isEmpty()){
+                canalAdapters = null;
+            }
+        }
         super.setCanalAdapters(canalAdapters);
 
         if (canalAdapters != null) {
@@ -39,6 +48,10 @@ public class AdapterCanalConfig extends CanalClientConfig {
                         DESTINATIONS.add(canalAdapter.getInstance());
                     }
                 }
+            }
+        } else {
+            synchronized (DESTINATIONS) {
+                DESTINATIONS.clear();
             }
         }
     }
