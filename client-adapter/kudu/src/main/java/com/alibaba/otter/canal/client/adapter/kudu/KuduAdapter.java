@@ -20,25 +20,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * ━━━━━━神兽出没━━━━━━
- * 　　　┏┓　　　┏┓
- * 　　┏┛┻━━━┛┻┓
- * 　　┃　　　━　　　┃
- * 　　┃　┳┛　┗┳　┃
- * 　　┃　　　┻　　　┃
- * 　　┗━┓　　　┏━┛
- * 　　　　┃　　　┃  神兽保佑
- * 　　　　┃　　　┃  代码无bug
- * 　　　　┃　　　┗━━━┓
- * 　　　　┃　　　　　　　┣┓
- * 　　　　┃　　　　　　　┏┛
- * 　　　　┗┓┓┏━┳┓┏┛
- * 　　　　　┃┫┫　┃┫┫
- * 　　　　　┗┻┛　┗┻┛
- * ━━━━━━感觉萌萌哒━━━━━━
- * Created by Liuyadong on 2019-11-12
- *
- * @description
+ * @author liuyadong
+ * @description kudu适配器主类
  */
 @SPI("kudu")
 public class KuduAdapter implements OuterAdapter {
@@ -163,6 +146,8 @@ public class KuduAdapter implements OuterAdapter {
         if (kuduConfigMonitor != null) {
             kuduConfigMonitor.destroy();
         }
+        //加入kudu client 关闭钩子
+        kuduTemplate.closeKuduClient();
     }
 
     @Override
