@@ -73,6 +73,7 @@ public class KuduTemplate {
         this.checkClient();
         KuduTable kuduTable = kuduClient.openTable(tableName);
         KuduSession session = kuduClient.newSession();
+        session.setTimeoutMillis(60000);
         try {
             session.setFlushMode(SessionConfiguration.FlushMode.MANUAL_FLUSH);
             session.setMutationBufferSpace(OPERATION_BATCH);
@@ -105,8 +106,14 @@ public class KuduTemplate {
                     if (delete_option.size() > 0) {
                         OperationResponse response = delete_option.get(0);
                         if (response.hasRowError()) {
-                            logger.error("delete row fail table name is :{} ", tableName);
-                            logger.error("error list is :{}", response.getRowError().getMessage());
+                            String error = response.getRowError().getMessage();
+                            if (error != null && error.contains("key not found")) {
+                                logger.warn("delete row fail table name is :{} ", tableName);
+                                logger.warn("error list is :{}", error);
+                            } else {
+                                logger.error("delete row fail table name is :{} ", tableName);
+                                logger.error("error list is :{}", error);
+                            }
                         }
                     }
                     uncommit = 0;
@@ -116,9 +123,16 @@ public class KuduTemplate {
             if (delete_option.size() > 0) {
                 OperationResponse response = delete_option.get(0);
                 if (response.hasRowError()) {
-                    logger.error("delete row fail table name is :{} ", tableName);
-                    logger.error("error list is :{}", response.getRowError().getMessage());
+                    String error = response.getRowError().getMessage();
+                    if (error != null && error.contains("key not found")) {
+                        logger.warn("delete row fail table name is :{} ", tableName);
+                        logger.warn("error list is :{}", error);
+                    } else {
+                        logger.error("delete row fail table name is :{} ", tableName);
+                        logger.error("error list is :{}", error);
+                    }
                 }
+                
             }
 
         } catch (KuduException e) {
@@ -142,6 +156,7 @@ public class KuduTemplate {
         this.checkClient();
         KuduTable kuduTable = kuduClient.openTable(tableName);
         KuduSession session = kuduClient.newSession();
+        session.setTimeoutMillis(60000);
         try {
             session.setFlushMode(SessionConfiguration.FlushMode.MANUAL_FLUSH);
             session.setMutationBufferSpace(OPERATION_BATCH);
@@ -212,6 +227,7 @@ public class KuduTemplate {
         this.checkClient();
         KuduTable kuduTable = kuduClient.openTable(tableName);// 打开表
         KuduSession session = kuduClient.newSession();  // 创建写session,kudu必须通过session写入
+        session.setTimeoutMillis(60000);
         try {
             session.setFlushMode(SessionConfiguration.FlushMode.MANUAL_FLUSH); // 采取Flush方式 手动刷新
             session.setMutationBufferSpace(OPERATION_BATCH);

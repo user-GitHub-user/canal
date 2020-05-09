@@ -56,7 +56,11 @@ public class KuduConfigMonitor {
         try {
             fileMonitor.stop();
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            if (e.getMessage().equals("Monitor is not running")) {
+                logger.warn(e.getMessage(), e);
+            } else {
+                logger.error(e.getMessage(), e);
+            }
         }
     }
 
