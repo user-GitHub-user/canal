@@ -262,7 +262,48 @@ public class KuduTemplate {
             }
         }
     }
-
+    
+    
+    /**
+     * 清空表，错误后重试
+     *
+     * @param tableName
+     * @param pkIds 
+     * @param dataList
+     * @throws KuduException
+     */
+    public void truncate(String tableName, List<String> pkIds) throws KuduException {
+        this.checkClient();
+        if (!format.format(new Date()).equals(today)) {
+            today = format.format(new Date());
+            todayTable.clear();
+        }
+        if(!todayTable.contains(tableName)) {
+            logger.info("dsa_canal_info table DML :{},{} ", today, tableName);
+            todayTable.add(tableName);
+        }
+        try {
+            KuduTable kuduTable = kuduClient.openTable(tableName);
+            String bakTableName = kuduTable.getName() + "_elephantwang_bak";
+            PartitionSchema ps =  kuduTable.getPartitionSchema();
+            CreateTableOptions builder = new CreateTableOptions();
+            if(!ps.getHashBucketSchemas().isEmpty()) {
+                builder.addHashPartitions(pkIds, ps.getHashBucketSchemas().get(0).getNumBuckets());
+            }
+            kuduClient.createTable(bakTableName,kuduTable.getSchema() ,builder);
+            kuduClient.deleteTable(tableName);
+            logger.info("truncate tableName exists :{}", kuduClient.tableExists(tableName));
+            kuduClient.alterTable(bakTableName, new AlterTableOptions().renameTable(tableName));
+           boolean done =  kuduClient.isAlterTableDone(tableName);
+           if (!done) {
+               logger.error("truncate not done message is tableName :{}", tableName);
+           }
+        } catch (KuduException e) {
+            logger.error("truncate error tableName is :{}", tableName);
+            throw e;
+        }
+    }
+    
     /**
      * 更新/插入字段，失败重试
      *
@@ -675,15 +716,15 @@ public class KuduTemplate {
      * @param type
      */
     private void fillRow(PartialRow row, String colName, Object rawVal, Type type) {
-        String rowValue = "0";
-        if (!(rawVal == null || "".equals(rawVal))) {
-            rowValue = rawVal + "";
-        } else {
-            return;
-        }
         if (type == null) {
             logger.warn("got unknown type {} for column '{}'-- ignoring this column", type, colName);
             return;
+        }
+        String rowValue = "0";
+        if (rawVal == null) {
+            row.setNull(colName);
+        } else {
+            rowValue = rawVal + "";
         }
         try {
             switch (type) {

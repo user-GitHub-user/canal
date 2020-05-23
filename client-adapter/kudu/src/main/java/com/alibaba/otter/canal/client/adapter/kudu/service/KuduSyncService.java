@@ -47,6 +47,10 @@ public class KuduSyncService {
                 upsert(config, dml);
             } else if (type != null && type.equalsIgnoreCase("DELETE")) {
                 delete(config, dml);
+            }else if (type != null && type.equalsIgnoreCase("TRUNCATE")){
+                truncate(config, dml);
+            }else {
+                logger.info("elephant_wang DML: {}", JSON.toJSONString(dml, SerializerFeature.WriteMapNullValue));
             }
             if (logger.isDebugEnabled()) {
                 logger.debug("DML: {}", JSON.toJSONString(dml, SerializerFeature.WriteMapNullValue));
@@ -116,6 +120,43 @@ public class KuduSyncService {
             }
         }
     }
+    
+    /**
+     * 截断事件
+     *
+     * @param config
+     * @param dml
+     */
+    private void truncate(KuduMappingConfig config, Dml dml) {
+        KuduMappingConfig.KuduMapping kuduMapping = config.getKuduMapping();
+        String configTable = kuduMapping.getTable();
+        String configDatabase = kuduMapping.getDatabase();
+        String table = dml.getTable();
+        String database = dml.getDatabase();
+        if (configTable.equals(table) && configDatabase.equals(database)) {
+            try {
+                //判定主键映射
+                String pkId = "";
+                Map<String, String> targetPk = kuduMapping.getTargetPk();
+                for (Map.Entry<String, String> entry : targetPk.entrySet()) {
+                    String mysqlID = entry.getKey().toLowerCase();
+                    String kuduID = entry.getValue();
+                    if (kuduID == null) {
+                        pkId = mysqlID;
+                    } else {
+                        pkId = kuduID;
+                    }
+                }
+                //切割联合主键
+                List<String> pkIds = Arrays.asList(pkId.split(","));
+                kuduTemplate.truncate(kuduMapping.getTargetTable(), pkIds);
+            } catch (KuduException e) {
+                logger.error(e.getMessage());
+                logger.error("DML: {}", JSON.toJSONString(dml, SerializerFeature.WriteMapNullValue));
+            }
+        }
+    }
+    
 
     /**
      * 更新插入事件
