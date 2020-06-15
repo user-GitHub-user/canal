@@ -27,9 +27,9 @@ public class KuduTemplate {
 
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     
-    private SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+    private SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHH");
     
-    private static String today = "20200413";
+    private static String today = "2020041311";
     
     private static ArrayList<String> todayTable = new ArrayList<>();
 
@@ -39,7 +39,7 @@ public class KuduTemplate {
     }
 
     /**
-     * 检车连接
+     * 检测连接
      */
     private void checkClient() {
         if (kuduClient == null) {
@@ -81,12 +81,13 @@ public class KuduTemplate {
         KuduTable kuduTable = kuduClient.openTable(tableName);
         KuduSession session = kuduClient.newSession();
         session.setTimeoutMillis(60000);
-        if (!format.format(new Date()).equals(today)) {
-            today = format.format(new Date());
+        Date date = new Date();
+        if (!format.format(date).equals(today)) {
+            today = format.format(date);
             todayTable.clear();
         }
         if(!todayTable.contains(tableName)) {
-            logger.info("dsa_canal_info table DML :{},{} ", today, tableName);
+            logger.info("dsa_canal_info table DML :{},{}", date.getTime(), tableName);
             todayTable.add(tableName);
         }
         try {
@@ -161,7 +162,7 @@ public class KuduTemplate {
             }
             if(haveError) {
                 logger.info("elephant_wang info：delete retry {}" ,tableName);
-                deleteRetry(tableName, dataList, 3);
+                deleteRetry(tableName, dataList, 30);
             }
         }
     }
@@ -174,6 +175,14 @@ public class KuduTemplate {
      * @throws KuduException
      */
     public void deleteRetry(String tableName, List<Map<String, Object>> dataList, int times) throws KuduException {
+        //每重试3次未成功，重新连接kudu
+        if(times%3 == 0){
+            reConnectKuduClient();
+        }
+        //重试5次不成功，打印一次error
+        if(times == 5){
+            logger.error("deleteRetry 5 times row fail table name is :{} ", tableName);
+        }
         boolean haveError = false;
         this.checkClient();
         KuduTable kuduTable = kuduClient.openTable(tableName);
@@ -274,12 +283,13 @@ public class KuduTemplate {
      */
     public void truncate(String tableName, List<String> pkIds) throws KuduException {
         this.checkClient();
-        if (!format.format(new Date()).equals(today)) {
-            today = format.format(new Date());
+        Date date = new Date();
+        if (!format.format(date).equals(today)) {
+            today = format.format(date);
             todayTable.clear();
         }
         if(!todayTable.contains(tableName)) {
-            logger.info("dsa_canal_info table DML :{},{} ", today, tableName);
+            logger.info("dsa_canal_info table DML :{},{}", date.getTime(), tableName);
             todayTable.add(tableName);
         }
         try {
@@ -317,12 +327,13 @@ public class KuduTemplate {
         KuduTable kuduTable = kuduClient.openTable(tableName);
         KuduSession session = kuduClient.newSession();
         session.setTimeoutMillis(60000);
-        if (!format.format(new Date()).equals(today)) {
-            today = format.format(new Date());
+        Date date = new Date();
+        if (!format.format(date).equals(today)) {
+            today = format.format(date);
             todayTable.clear();
         }
         if(!todayTable.contains(tableName)) {
-            logger.info("dsa_canal_info table DML :{},{} ", today, tableName);
+            logger.info("dsa_canal_info table DML :{},{}", date.getTime(), tableName);
             todayTable.add(tableName);
         }
         try {
@@ -383,7 +394,7 @@ public class KuduTemplate {
             }
             if (haveError) {
                 logger.info("elephant_wang info：update retry {}" ,tableName);
-                upsertRetry(tableName, dataList, 3);
+                upsertRetry(tableName, dataList,  30);
             }
         }
     }
@@ -396,6 +407,14 @@ public class KuduTemplate {
      * @throws KuduException
      */
     public void upsertRetry(String tableName, List<Map<String, Object>> dataList, int times) throws KuduException {
+        //每重试3次未成功，重新连接kudu
+        if(times%3 == 0){
+            reConnectKuduClient();
+        }
+        //重试5次不成功，打印一次error
+        if(times == 5){
+            logger.error("upsertRetry 5 times row fail table name is :{} ", tableName);
+        }
         boolean haveError = false;
         this.checkClient();
         KuduTable kuduTable = kuduClient.openTable(tableName);
@@ -487,12 +506,13 @@ public class KuduTemplate {
         KuduTable kuduTable = kuduClient.openTable(tableName);// 打开表
         KuduSession session = kuduClient.newSession();  // 创建写session,kudu必须通过session写入
         session.setTimeoutMillis(60000);
-        if (!format.format(new Date()).equals(today)) {
-            today = format.format(new Date());
+        Date date = new Date();
+        if (!format.format(date).equals(today)) {
+            today = format.format(date);
             todayTable.clear();
         }
         if(!todayTable.contains(tableName)) {
-            logger.info("dsa_canal_info table DML :{},{} ", today, tableName);
+            logger.info("dsa_canal_info table DML :{},{}", date.getTime(), tableName);
             todayTable.add(tableName);
         }
         try {
@@ -565,7 +585,7 @@ public class KuduTemplate {
             }
             if (haveError) {
                 logger.info("elephant_wang info：insert retry {}" ,tableName);
-                insertRetry(tableName, dataList,3);
+                insertRetry(tableName, dataList, 30);
             }
         }
 
@@ -580,6 +600,14 @@ public class KuduTemplate {
      * @throws KuduException
      */
     public void insertRetry(String tableName, List<Map<String, Object>> dataList, int times) throws KuduException {
+        //每重试3次未成功，重新连接kudu
+        if(times%3 == 0){
+            reConnectKuduClient();
+        }
+        //重试5次不成功，打印一次error
+        if(times == 5){
+            logger.error("insertRetry 5 times row fail table name is :{} ", tableName);
+        }
         boolean haveError = false;
         this.checkClient();
         KuduTable kuduTable = kuduClient.openTable(tableName);// 打开表
@@ -706,6 +734,23 @@ public class KuduTemplate {
                 logger.error("ShutdownHook Close KuduClient Error! error message {}", e.getMessage());
             }
         }
+    }
+    
+    /**
+     * 重新连接kudu
+     *
+     * @throws IOException
+     */
+    public void reConnectKuduClient() {
+        if (kuduClient != null) {
+            try {
+                kuduClient.close();
+                kuduClient = null;
+            } catch (Exception e) {
+                logger.error("ShutdownHook Close KuduClient Error! error message {}", e.getMessage());
+            }
+        }
+        checkClient();
     }
 
     /**
