@@ -175,10 +175,6 @@ public class KuduTemplate {
      * @throws KuduException
      */
     public void deleteRetry(String tableName, List<Map<String, Object>> dataList, int times) throws KuduException {
-        //每重试3次未成功，重新连接kudu
-        if(times%3 == 0){
-            reConnectKuduClient();
-        }
         //重试5次不成功，打印一次error
         if(times == 5){
             logger.error("deleteRetry 5 times row fail table name is :{} ", tableName);
@@ -274,7 +270,7 @@ public class KuduTemplate {
     
     
     /**
-     * 清空表，错误后重试
+     * 清空表
      *
      * @param tableName
      * @param pkIds 
@@ -407,10 +403,6 @@ public class KuduTemplate {
      * @throws KuduException
      */
     public void upsertRetry(String tableName, List<Map<String, Object>> dataList, int times) throws KuduException {
-        //每重试3次未成功，重新连接kudu
-        if(times%3 == 0){
-            reConnectKuduClient();
-        }
         //重试5次不成功，打印一次error
         if(times == 5){
             logger.error("upsertRetry 5 times row fail table name is :{} ", tableName);
@@ -600,10 +592,6 @@ public class KuduTemplate {
      * @throws KuduException
      */
     public void insertRetry(String tableName, List<Map<String, Object>> dataList, int times) throws KuduException {
-        //每重试3次未成功，重新连接kudu
-        if(times%3 == 0){
-            reConnectKuduClient();
-        }
         //重试5次不成功，打印一次error
         if(times == 5){
             logger.error("insertRetry 5 times row fail table name is :{} ", tableName);
@@ -734,23 +722,6 @@ public class KuduTemplate {
                 logger.error("ShutdownHook Close KuduClient Error! error message {}", e.getMessage());
             }
         }
-    }
-    
-    /**
-     * 重新连接kudu
-     *
-     * @throws IOException
-     */
-    public void reConnectKuduClient() {
-        if (kuduClient != null) {
-            try {
-                kuduClient.close();
-                kuduClient = null;
-            } catch (Exception e) {
-                logger.error("ShutdownHook Close KuduClient Error! error message {}", e.getMessage());
-            }
-        }
-        checkClient();
     }
 
     /**
