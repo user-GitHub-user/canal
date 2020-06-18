@@ -100,12 +100,12 @@ public class KuduEtlService extends AbstractEtlService {
                             logger.debug("successful import count:" + impCount.get());
                         }
                         if (idx % kuduMapping.getCommitBatch() == 0) {
-                            kuduTemplate.upsert(kuduMapping.getTargetTable(), dataList);
+                            kuduTemplate.upsert(kuduMapping.getTargetTable(),kuduMapping.getEncryptionColumns(), dataList);
                             dataList.clear();
                         }
                     }
                     if (!dataList.isEmpty()) {
-                        kuduTemplate.upsert(kuduMapping.getTargetTable(), dataList);
+                        kuduTemplate.upsert(kuduMapping.getTargetTable(), kuduMapping.getEncryptionColumns(), dataList);
                     }
                     return true;
 

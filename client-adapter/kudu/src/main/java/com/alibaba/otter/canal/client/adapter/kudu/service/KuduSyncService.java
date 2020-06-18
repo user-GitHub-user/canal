@@ -149,7 +149,7 @@ public class KuduSyncService {
                 }
                 //切割联合主键
                 List<String> pkIds = Arrays.asList(pkId.split(","));
-                kuduTemplate.truncate(kuduMapping.getTargetTable(), pkIds);
+                kuduTemplate.truncate(kuduMapping.getTargetTable());
             } catch (KuduException e) {
                 logger.error(e.getMessage());
                 logger.error("DML: {}", JSON.toJSONString(dml, SerializerFeature.WriteMapNullValue));
@@ -184,13 +184,13 @@ public class KuduSyncService {
                     dataList.add(entry);
                     idx++;
                     if (idx % kuduMapping.getCommitBatch() == 0) {
-                        kuduTemplate.upsert(kuduMapping.getTargetTable(), dataList);
+                        kuduTemplate.upsert(kuduMapping.getTargetTable(), kuduMapping.getEncryptionColumns(), dataList);
                         dataList.clear();
                         completed = true;
                     }
                 }
                 if (!completed) {
-                    kuduTemplate.upsert(kuduMapping.getTargetTable(), dataList);
+                    kuduTemplate.upsert(kuduMapping.getTargetTable(), kuduMapping.getEncryptionColumns(), dataList);
                 }
             } catch (KuduException e) {
                 logger.error(e.getMessage());
@@ -227,13 +227,13 @@ public class KuduSyncService {
                     dataList.add(entry);
                     idx++;
                     if (idx % kuduMapping.getCommitBatch() == 0) {
-                        kuduTemplate.insert(kuduMapping.getTargetTable(), dataList);
+                        kuduTemplate.insert(kuduMapping.getTargetTable(), kuduMapping.getEncryptionColumns(), dataList);
                         dataList.clear();
                         completed = true;
                     }
                 }
                 if (!completed) {
-                    kuduTemplate.insert(kuduMapping.getTargetTable(), dataList);
+                    kuduTemplate.insert(kuduMapping.getTargetTable(), kuduMapping.getEncryptionColumns(), dataList);
                 }
             } catch (KuduException e) {
                 logger.error(e.getMessage());

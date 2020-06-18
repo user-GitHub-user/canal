@@ -1,6 +1,7 @@
 package com.alibaba.otter.canal.client.adapter.kudu.config;
 
 import com.alibaba.otter.canal.client.adapter.support.AdapterConfig;
+
 import org.apache.commons.lang.StringUtils;
 
 import java.util.LinkedHashMap;
@@ -92,7 +93,9 @@ public class KuduMappingConfig implements AdapterConfig {
         private boolean mapAll = false;                 // 映射所有字段
         private String targetDb;                            // 目标库名
         private String targetTable;                         // 目标表名
-        private Map<String, String> targetColumns;                       // 目标表字段映射
+        private Map<String, String> targetColumns;          // 目标表字段映射
+        
+        private Map<String, String> encryptionColumns;   // 加密字段映射
 
         private String etlCondition;                        // etl条件sql
 
@@ -162,6 +165,17 @@ public class KuduMappingConfig implements AdapterConfig {
 
         public void setTargetColumns(Map<String, String> targetColumns) {
             this.targetColumns = targetColumns;
+        }
+        
+        public Map<String, String> getEncryptionColumns() {
+            if (encryptionColumns == null) {
+                encryptionColumns = new LinkedHashMap<>();
+            }
+            return encryptionColumns;
+        }
+
+        public void setEncryptionColumns(Map<String, String> encryptionColumns) {
+            this.encryptionColumns = encryptionColumns;
         }
 
         public String getEtlCondition() {

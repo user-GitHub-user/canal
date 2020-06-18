@@ -133,22 +133,13 @@ public class KuduAdapter implements OuterAdapter {
                 if (!configs.isEmpty()) {
                     configs.forEach(config -> kuduSyncService.sync(config, dml));
                 } else {
-                    logger.error("groupID didn't mach,please check your gruopId ");
-                    logger.error("elephant_wang info:dml GroupId:'" + dml.getGroupId() + "',destination_database-table:" + destination + "_" + database + "-" + table);
+                    logger.error("groupID didn't mach,please check your gruopId info:dml GroupId:'" + dml.getGroupId() + "',destination_database-table:" + destination + "_" + database + "-" + table);
                     configMap.values().forEach(config -> {
                         logger.error("elephant_wang info:config GroupId:'" + config.getGroupId() + "'");
                     });
                 }
             } else {
-                if (!destination.equals("10.10.10.236.3307")) {
-                    logger.error("{} config didn't get,please check your map key ", destination + "_" + database + "-" + table + ",dml type:" + dml.getType());
-                    Object[] set = mappingConfigCache.keySet().toArray();
-                    for(int i = 0;i<set.length;i++){
-                        logger.info(set[i].toString());
-                    }
-                } else {
-                    logger.warn("{} config didn't get,please check your map key ", destination + "_" + database + "-" + table + ",dml type:" + dml.getType());
-                }
+                logger.error("{} config didn't get,please check your map key ", destination + "_" + database + "-" + table + ",dml type:" + dml.getType());
             }
         }
     }

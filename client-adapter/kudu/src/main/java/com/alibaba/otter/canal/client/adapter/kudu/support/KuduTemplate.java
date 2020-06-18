@@ -6,6 +6,7 @@ import org.apache.kudu.Type;
 import org.apache.kudu.client.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.DigestUtils;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -80,7 +81,6 @@ public class KuduTemplate {
         this.checkClient();
         KuduTable kuduTable = kuduClient.openTable(tableName);
         KuduSession session = kuduClient.newSession();
-        session.setTimeoutMillis(60000);
         Date date = new Date();
         if (!format.format(date).equals(today)) {
             today = format.format(date);
@@ -112,7 +112,7 @@ public class KuduTemplate {
                         continue;
                     }
                     Object value = entry.getValue();
-                    fillRow(row, name, value, type); //填充行数据
+                    fillRow(row, name, value, type, false); //填充行数据
                 }
                 session.apply(delete);
                 // 对于手工提交, 需要buffer在未满的时候flush,这里采用了buffer一半时即提交
@@ -183,7 +183,6 @@ public class KuduTemplate {
         this.checkClient();
         KuduTable kuduTable = kuduClient.openTable(tableName);
         KuduSession session = kuduClient.newSession();
-        session.setTimeoutMillis(60000);
         try {
             session.setFlushMode(SessionConfiguration.FlushMode.MANUAL_FLUSH);
             session.setMutationBufferSpace(OPERATION_BATCH);
@@ -206,7 +205,7 @@ public class KuduTemplate {
                         continue;
                     }
                     Object value = entry.getValue();
-                    fillRow(row, name, value, type); //填充行数据
+                    fillRow(row, name, value, type, false); //填充行数据
                 }
                 session.apply(delete);
                 // 对于手工提交, 需要buffer在未满的时候flush,这里采用了buffer一半时即提交
@@ -277,7 +276,7 @@ public class KuduTemplate {
      * @param dataList
      * @throws KuduException
      */
-    public void truncate(String tableName, List<String> pkIds) throws KuduException {
+    public void truncate(String tableName) throws KuduException {
         this.checkClient();
         Date date = new Date();
         if (!format.format(date).equals(today)) {
@@ -294,8 +293,15 @@ public class KuduTemplate {
             PartitionSchema ps =  kuduTable.getPartitionSchema();
             CreateTableOptions builder = new CreateTableOptions();
             if(!ps.getHashBucketSchemas().isEmpty()) {
-                builder.addHashPartitions(pkIds, ps.getHashBucketSchemas().get(0).getNumBuckets());
+                logger.info("HashBucketSchemas size: {}", ps.getHashBucketSchemas().size());
+                List<String> pkIds = new ArrayList<>();
+                for(ColumnSchema cs : kuduTable.getSchema().getPrimaryKeyColumns()){
+                    pkIds.add(cs.getName());
+                }
+                builder.addHashPartitions(pkIds, ps.getHashBucketSchemas().get(0).getNumBuckets(), ps.getHashBucketSchemas().get(0).getSeed());
             }
+                builder.setRangePartitionColumns(new ArrayList<String>());
+                
             kuduClient.createTable(bakTableName,kuduTable.getSchema() ,builder);
             kuduClient.deleteTable(tableName);
             logger.info("truncate tableName exists :{}", kuduClient.tableExists(tableName));
@@ -317,12 +323,11 @@ public class KuduTemplate {
      * @param dataList
      * @throws KuduException
      */
-    public void upsert(String tableName, List<Map<String, Object>> dataList) throws KuduException {
+    public void upsert(String tableName,Map<String, String> encryptionColumns, List<Map<String, Object>> dataList) throws KuduException {
         boolean haveError = false;
         this.checkClient();
         KuduTable kuduTable = kuduClient.openTable(tableName);
         KuduSession session = kuduClient.newSession();
-        session.setTimeoutMillis(60000);
         Date date = new Date();
         if (!format.format(date).equals(today)) {
             today = format.format(date);
@@ -353,8 +358,12 @@ public class KuduTemplate {
                     if(type == null) {
                         continue;
                     }
+                    boolean isEncryption = false;
+                    if("MD5".equals(encryptionColumns.get(name))) {
+                        isEncryption = true;
+                    }
                     Object value = entry.getValue();
-                    fillRow(row, name, value, type); //填充行数据
+                    fillRow(row, name, value, type, isEncryption); //填充行数据
                 }
                 session.apply(upsert);
                 // 对于手工提交, 需要buffer在未满的时候flush,这里采用了buffer一半时即提交
@@ -390,7 +399,7 @@ public class KuduTemplate {
             }
             if (haveError) {
                 logger.info("elephant_wang info：update retry {}" ,tableName);
-                upsertRetry(tableName, dataList,  30);
+                upsertRetry(tableName, encryptionColumns, dataList,  30);
             }
         }
     }
@@ -402,7 +411,7 @@ public class KuduTemplate {
      * @param dataList
      * @throws KuduException
      */
-    public void upsertRetry(String tableName, List<Map<String, Object>> dataList, int times) throws KuduException {
+    public void upsertRetry(String tableName, Map<String, String> encryptionColumns, List<Map<String, Object>> dataList, int times) throws KuduException {
         //重试5次不成功，打印一次error
         if(times == 5){
             logger.error("upsertRetry 5 times row fail table name is :{} ", tableName);
@@ -411,7 +420,6 @@ public class KuduTemplate {
         this.checkClient();
         KuduTable kuduTable = kuduClient.openTable(tableName);
         KuduSession session = kuduClient.newSession();
-        session.setTimeoutMillis(60000);
         try {
             session.setFlushMode(SessionConfiguration.FlushMode.MANUAL_FLUSH);
             session.setMutationBufferSpace(OPERATION_BATCH);
@@ -433,8 +441,12 @@ public class KuduTemplate {
                     if(type == null) {
                         continue;
                     }
+                    boolean isEncryption = false;
+                    if("MD5".equals(encryptionColumns.get(name))) {
+                        isEncryption = true;
+                    }
                     Object value = entry.getValue();
-                    fillRow(row, name, value, type); //填充行数据
+                    fillRow(row, name, value, type, isEncryption); //填充行数据
                 }
                 session.apply(upsert);
                 // 对于手工提交, 需要buffer在未满的时候flush,这里采用了buffer一半时即提交
@@ -480,7 +492,7 @@ public class KuduTemplate {
             }
             logger.info("elephant_wang info：upsertRetry{} table name is :{}" , times, tableName);
             if(haveError && --times > 0) {
-                upsertRetry(tableName, dataList, times);
+                upsertRetry(tableName, encryptionColumns, dataList, times);
             }
         }
     }
@@ -492,12 +504,11 @@ public class KuduTemplate {
      * @param dataList
      * @throws KuduException
      */
-    public void insert(String tableName, List<Map<String, Object>> dataList) throws KuduException {
+    public void insert(String tableName, Map<String, String> encryptionColumns, List<Map<String, Object>> dataList) throws KuduException {
         boolean haveError = false;
         this.checkClient();
         KuduTable kuduTable = kuduClient.openTable(tableName);// 打开表
         KuduSession session = kuduClient.newSession();  // 创建写session,kudu必须通过session写入
-        session.setTimeoutMillis(60000);
         Date date = new Date();
         if (!format.format(date).equals(today)) {
             today = format.format(date);
@@ -528,8 +539,12 @@ public class KuduTemplate {
                     if(type == null) {
                         continue;
                     }
+                    boolean isEncryption = false;
+                    if("MD5".equals(encryptionColumns.get(name))) {
+                        isEncryption = true;
+                    }
                     Object value = entry.getValue();
-                    fillRow(row, name, value, type); //填充行数据
+                    fillRow(row, name, value, type, isEncryption); //填充行数据
                 }
                 session.apply(insert);
                 // 对于手工提交, 需要buffer在未满的时候flush,这里采用了buffer一半时即提交
@@ -577,7 +592,7 @@ public class KuduTemplate {
             }
             if (haveError) {
                 logger.info("elephant_wang info：insert retry {}" ,tableName);
-                insertRetry(tableName, dataList, 30);
+                insertRetry(tableName, encryptionColumns, dataList, 30);
             }
         }
 
@@ -591,7 +606,7 @@ public class KuduTemplate {
      * @param dataList
      * @throws KuduException
      */
-    public void insertRetry(String tableName, List<Map<String, Object>> dataList, int times) throws KuduException {
+    public void insertRetry(String tableName, Map<String, String> encryptionColumns, List<Map<String, Object>> dataList, int times) throws KuduException {
         //重试5次不成功，打印一次error
         if(times == 5){
             logger.error("insertRetry 5 times row fail table name is :{} ", tableName);
@@ -600,7 +615,6 @@ public class KuduTemplate {
         this.checkClient();
         KuduTable kuduTable = kuduClient.openTable(tableName);// 打开表
         KuduSession session = kuduClient.newSession();  // 创建写session,kudu必须通过session写入
-        session.setTimeoutMillis(60000);
         try {
             session.setFlushMode(SessionConfiguration.FlushMode.MANUAL_FLUSH); // 采取Flush方式 手动刷新
             session.setMutationBufferSpace(OPERATION_BATCH);
@@ -622,8 +636,12 @@ public class KuduTemplate {
                     if(type == null) {
                         continue;
                     }
+                    boolean isEncryption = false;
+                    if("MD5".equals(encryptionColumns.get(name))) {
+                        isEncryption = true;
+                    }
                     Object value = entry.getValue();
-                    fillRow(row, name, value, type); //填充行数据
+                    fillRow(row, name, value, type, isEncryption); //填充行数据
                 }
                 session.apply(insert);
                 // 对于手工提交, 需要buffer在未满的时候flush,这里采用了buffer一半时即提交
@@ -679,7 +697,7 @@ public class KuduTemplate {
             }
             logger.info("elephant_wang info：insertRetry{} table name is :{}" , times, tableName);
             if(haveError && --times > 0) {
-                insertRetry(tableName, dataList, times);
+                insertRetry(tableName, encryptionColumns, dataList, times);
             }
         }
     }
@@ -731,7 +749,7 @@ public class KuduTemplate {
      * @param rawVal
      * @param type
      */
-    private void fillRow(PartialRow row, String colName, Object rawVal, Type type) {
+    private void fillRow(PartialRow row, String colName, Object rawVal, Type type, boolean isEncryption) {
         if (type == null) {
             logger.warn("got unknown type {} for column '{}'-- ignoring this column", type, colName);
             return;
@@ -739,8 +757,12 @@ public class KuduTemplate {
         String rowValue = "0";
         if (rawVal == null) {
             row.setNull(colName);
+            return;
         } else {
             rowValue = rawVal + "";
+        }
+        if (isEncryption) {
+            rowValue = DigestUtils.md5DigestAsHex(rowValue.getBytes());
         }
         try {
             switch (type) {
