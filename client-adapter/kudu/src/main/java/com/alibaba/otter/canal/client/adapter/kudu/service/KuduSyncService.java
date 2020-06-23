@@ -75,20 +75,18 @@ public class KuduSyncService {
             if (data == null || data.isEmpty()) {
                 return;
             }
-            //判定主键映射
-            String pkId = "";
+            //判定主键映射/联合主键
+            List<String> pkIds = new ArrayList<>();
             Map<String, String> targetPk = kuduMapping.getTargetPk();
             for (Map.Entry<String, String> entry : targetPk.entrySet()) {
                 String mysqlID = entry.getKey().toLowerCase();
                 String kuduID = entry.getValue();
                 if (kuduID == null) {
-                    pkId = mysqlID;
+                    pkIds.add(mysqlID);
                 } else {
-                    pkId = kuduID;
+                    pkIds.add(kuduID);
                 }
             }
-            //切割联合主键
-            List<String> pkIds = Arrays.asList(pkId.split(","));
             try {
                 int idx = 1;
                 boolean completed = false;
@@ -135,20 +133,6 @@ public class KuduSyncService {
         String database = dml.getDatabase();
         if (configTable.equals(table) && configDatabase.equals(database)) {
             try {
-                //判定主键映射
-                String pkId = "";
-                Map<String, String> targetPk = kuduMapping.getTargetPk();
-                for (Map.Entry<String, String> entry : targetPk.entrySet()) {
-                    String mysqlID = entry.getKey().toLowerCase();
-                    String kuduID = entry.getValue();
-                    if (kuduID == null) {
-                        pkId = mysqlID;
-                    } else {
-                        pkId = kuduID;
-                    }
-                }
-                //切割联合主键
-                List<String> pkIds = Arrays.asList(pkId.split(","));
                 kuduTemplate.truncate(kuduMapping.getTargetTable());
             } catch (KuduException e) {
                 logger.error(e.getMessage());
