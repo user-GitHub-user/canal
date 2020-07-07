@@ -28,11 +28,9 @@ public class KuduTemplate {
 
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     
-    private SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHH");
+    private Calendar calendar = Calendar.getInstance();
     
-    private static String today = "2020041311";
-    
-    private static ArrayList<String> todayTable = new ArrayList<>();
+    private ArrayList<String> todayTable = new ArrayList<>();
 
     public KuduTemplate(String master_str) {
         this.masters = master_str;
@@ -82,12 +80,25 @@ public class KuduTemplate {
         KuduTable kuduTable = kuduClient.openTable(tableName);
         KuduSession session = kuduClient.newSession();
         Date date = new Date();
-        if (!format.format(date).equals(today)) {
-            today = format.format(date);
+        // 15分钟更新一次
+        if (date.getTime() > calendar.getTimeInMillis()) {
             todayTable.clear();
+            calendar.setTime(date);
+            if (calendar.get(Calendar.MINUTE) < 15) {
+                calendar.set(Calendar.MINUTE, 15);
+            } else if (calendar.get(Calendar.MINUTE) < 30) {
+                calendar.set(Calendar.MINUTE, 30);
+            } else if (calendar.get(Calendar.MINUTE) < 45) {
+                calendar.set(Calendar.MINUTE, 45);
+            } else {
+                calendar.add(Calendar.HOUR, 1);
+                calendar.set(Calendar.MINUTE, 0);
+            }
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
         }
-        if(!todayTable.contains(tableName)) {
-            logger.info("dsa_canal_info table DML :{},{}", date.getTime(), tableName);
+        if (!todayTable.contains(tableName)) {
+            logger.info("dsa_canal_info table DML :{},{}", calendar.getTimeInMillis(), tableName);
             todayTable.add(tableName);
         }
         try {
@@ -279,12 +290,25 @@ public class KuduTemplate {
     public void truncate(String tableName) throws KuduException {
         this.checkClient();
         Date date = new Date();
-        if (!format.format(date).equals(today)) {
-            today = format.format(date);
+        // 15分钟更新一次
+        if (date.getTime() > calendar.getTimeInMillis()) {
             todayTable.clear();
+            calendar.setTime(date);
+            if (calendar.get(Calendar.MINUTE) < 15) {
+                calendar.set(Calendar.MINUTE, 15);
+            } else if (calendar.get(Calendar.MINUTE) < 30) {
+                calendar.set(Calendar.MINUTE, 30);
+            } else if (calendar.get(Calendar.MINUTE) < 45) {
+                calendar.set(Calendar.MINUTE, 45);
+            } else {
+                calendar.add(Calendar.HOUR, 1);
+                calendar.set(Calendar.MINUTE, 0);
+            }
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
         }
-        if(!todayTable.contains(tableName)) {
-            logger.info("dsa_canal_info table DML :{},{}", date.getTime(), tableName);
+        if (!todayTable.contains(tableName)) {
+            logger.info("dsa_canal_info table DML :{},{}", calendar.getTimeInMillis(), tableName);
             todayTable.add(tableName);
         }
         try {
@@ -329,12 +353,25 @@ public class KuduTemplate {
         KuduTable kuduTable = kuduClient.openTable(tableName);
         KuduSession session = kuduClient.newSession();
         Date date = new Date();
-        if (!format.format(date).equals(today)) {
-            today = format.format(date);
+        // 15分钟更新一次
+        if (date.getTime() > calendar.getTimeInMillis()) {
             todayTable.clear();
+            calendar.setTime(date);
+            if (calendar.get(Calendar.MINUTE) < 15) {
+                calendar.set(Calendar.MINUTE, 15);
+            } else if (calendar.get(Calendar.MINUTE) < 30) {
+                calendar.set(Calendar.MINUTE, 30);
+            } else if (calendar.get(Calendar.MINUTE) < 45) {
+                calendar.set(Calendar.MINUTE, 45);
+            } else {
+                calendar.add(Calendar.HOUR, 1);
+                calendar.set(Calendar.MINUTE, 0);
+            }
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
         }
-        if(!todayTable.contains(tableName)) {
-            logger.info("dsa_canal_info table DML :{},{}", date.getTime(), tableName);
+        if (!todayTable.contains(tableName)) {
+            logger.info("dsa_canal_info table DML :{},{}", calendar.getTimeInMillis(), tableName);
             todayTable.add(tableName);
         }
         try {
@@ -510,12 +547,25 @@ public class KuduTemplate {
         KuduTable kuduTable = kuduClient.openTable(tableName);// 打开表
         KuduSession session = kuduClient.newSession();  // 创建写session,kudu必须通过session写入
         Date date = new Date();
-        if (!format.format(date).equals(today)) {
-            today = format.format(date);
+        // 15分钟更新一次
+        if (date.getTime() > calendar.getTimeInMillis()) {
             todayTable.clear();
+            calendar.setTime(date);
+            if (calendar.get(Calendar.MINUTE) < 15) {
+                calendar.set(Calendar.MINUTE, 15);
+            } else if (calendar.get(Calendar.MINUTE) < 30) {
+                calendar.set(Calendar.MINUTE, 30);
+            } else if (calendar.get(Calendar.MINUTE) < 45) {
+                calendar.set(Calendar.MINUTE, 45);
+            } else {
+                calendar.add(Calendar.HOUR, 1);
+                calendar.set(Calendar.MINUTE, 0);
+            }
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
         }
-        if(!todayTable.contains(tableName)) {
-            logger.info("dsa_canal_info table DML :{},{}", date.getTime(), tableName);
+        if (!todayTable.contains(tableName)) {
+            logger.info("dsa_canal_info table DML :{},{}", calendar.getTimeInMillis(), tableName);
             todayTable.add(tableName);
         }
         try {
