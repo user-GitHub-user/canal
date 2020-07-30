@@ -50,7 +50,9 @@ public class KuduSyncService {
             }else if (type != null && type.equalsIgnoreCase("TRUNCATE")){
                 truncate(config, dml);
             }else {
-                logger.error("elephant_wang DML: {}", JSON.toJSONString(dml, SerializerFeature.WriteMapNullValue));
+                if (!"DINDEX".equals(dml.getType()) && !"CINDEX".equals(dml.getType())) {
+                    logger.error("elephant_wang DML: {}", JSON.toJSONString(dml, SerializerFeature.WriteMapNullValue));
+                }
             }
             if (logger.isDebugEnabled()) {
                 logger.debug("DML: {}", JSON.toJSONString(dml, SerializerFeature.WriteMapNullValue));

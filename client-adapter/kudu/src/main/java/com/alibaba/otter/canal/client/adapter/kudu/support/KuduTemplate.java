@@ -812,7 +812,7 @@ public class KuduTemplate {
             rowValue = rawVal + "";
         }
         if (isEncryption) {
-            rowValue = DigestUtils.md5DigestAsHex(rowValue.getBytes());
+            rowValue = DigestUtils.md5DigestAsHex(DigestUtils.md5DigestAsHex(rowValue.getBytes()).getBytes());
         }
         try {
             switch (type) {
