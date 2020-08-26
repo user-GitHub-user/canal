@@ -46,7 +46,6 @@ public class KuduTemplate {
             List<String> masterList = Arrays.asList(masters.split(","));
             kuduClient = new KuduClient.KuduClientBuilder(masterList)
                     .defaultOperationTimeoutMs(60000)
-                    .defaultSocketReadTimeoutMs(60000)
                     .defaultAdminOperationTimeoutMs(60000).build();
         }
     }
