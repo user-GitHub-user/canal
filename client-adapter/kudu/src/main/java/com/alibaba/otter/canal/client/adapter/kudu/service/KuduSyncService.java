@@ -51,7 +51,7 @@ public class KuduSyncService {
                 truncate(config, dml);
             }else {
                 if (!"DINDEX".equals(dml.getType()) && !"CINDEX".equals(dml.getType())) {
-                    logger.error("elephant_wang DML: {}", JSON.toJSONString(dml, SerializerFeature.WriteMapNullValue));
+                    logger.info("table-metadata-change DML: {}", JSON.toJSONString(dml, SerializerFeature.WriteMapNullValue));
                 }
             }
             if (logger.isDebugEnabled()) {

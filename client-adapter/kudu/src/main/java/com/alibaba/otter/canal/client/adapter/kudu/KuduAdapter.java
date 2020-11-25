@@ -133,13 +133,8 @@ public class KuduAdapter implements OuterAdapter {
                 if (!configs.isEmpty()) {
                     configs.forEach(config -> kuduSyncService.sync(config, dml));
                 } else {
-                    logger.error("groupID didn't mach,please check your gruopId info:dml GroupId:'" + dml.getGroupId() + "',destination_database-table:" + destination + "_" + database + "-" + table);
-                    configMap.values().forEach(config -> {
-                        logger.error("elephant_wang info:config GroupId:'" + config.getGroupId() + "'");
-                    });
+                    logger.warn("groupID didn't mach,please check your gruopId info:dml GroupId:'" + dml.getGroupId() + "',destination_database-table:" + destination + "_" + database + "-" + table);
                 }
-            } else {
-                logger.error("{} config didn't get,please check your map key ", destination + "_" + database + "-" + table + ",dml type:" + dml.getType());
             }
         }
     }
