@@ -702,7 +702,11 @@ public class KuduTemplate {
                 kuduClient.close();
                 kuduClient = null;
             } catch (Exception e) {
-                logger.error("ShutdownHook Close KuduClient Error! error message {}", e.getMessage());
+                if(e.getMessage().contains("the client has already been closed")) {
+                    logger.warn("ShutdownHook Close KuduClient Error! error message {}", e.getMessage()); 
+                } else {
+                    logger.error("ShutdownHook Close KuduClient Error! error message {}", e.getMessage());
+                }
             }
         }
     }
